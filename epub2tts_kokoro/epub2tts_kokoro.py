@@ -396,9 +396,9 @@ def main():
         "--speaker",
         type=str,
         nargs="?",
-        const="af_sy",
-        default="af_sky",
-        help="Speaker to use (ex af_sky)",
+        const="af_heart",
+        default="af_heart",
+        help="Speaker to use (ex af_heart)",
     )
     parser.add_argument(
         "--cover",

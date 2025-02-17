@@ -25,12 +25,12 @@
 ## Read text to audiobook:
 
 * `epub2tts-kokoro mybook.txt --cover mybook.png`
-* Optional: specify a speaker with `--speaker <speaker>`. [Check here for available voices](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md), default speaker is `af_sky` if `--speaker` is not specified.
+* Optional: specify a speaker with `--speaker <speaker>`. [Check here for available voices](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md), default speaker is `af_heart` if `--speaker` is not specified.
 
 
 ## All options
 * `-h, --help` - show this help message and exit
-* `--speaker SPEAKER` - Speaker to use (example: af_sky)
+* `--speaker SPEAKER` - Speaker to use (example: af_heart)
 * `--cover image.[jpg|png]` - Image to use for cover
 * `--paragraphpause <N>` - Number of milliseconds to pause between paragraphs
 * `--speed <N>` - Reading speed (ex 1.3)
