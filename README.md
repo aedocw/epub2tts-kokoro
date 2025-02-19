@@ -25,7 +25,7 @@
 ## Read text to audiobook:
 
 * `epub2tts-kokoro mybook.txt --cover mybook.png`
-* Optional: specify a speaker with `--speaker <speaker>`. [Check here for available voices](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md), default speaker is `af_heart` if `--speaker` is not specified.
+* Optional: specify a speaker with `--speaker <speaker>`. [Check here for available voices](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md), default speaker is `af_heart` if `--speaker` is not specified. You can also generate speaker samples by running the script `python gen_samples.py`
 
 
 ## All options
