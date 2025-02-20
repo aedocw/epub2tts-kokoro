@@ -52,6 +52,40 @@ If you've found something new, please open an issue and be sure to include:
 
 </details>
 
+## Voice samples
+<details>
+<summary>Voice samples</summary>
+af_alloy_sample.wav: <audio controls src='samples/af_alloy_sample.wav'></audio><br>
+af_aoede_sample.wav: <audio controls src='samples/af_aoede_sample.wav'></audio><br>
+af_bella_sample.wav: <audio controls src='samples/af_bella_sample.wav'></audio><br>
+af_heart_sample.wav: <audio controls src='samples/af_heart_sample.wav'></audio><br>
+af_jessica_sample.wav: <audio controls src='samples/af_jessica_sample.wav'></audio><br>
+af_kore_sample.wav: <audio controls src='samples/af_kore_sample.wav'></audio><br>
+af_nicole_sample.wav: <audio controls src='samples/af_nicole_sample.wav'></audio><br>
+af_nova_sample.wav: <audio controls src='samples/af_nova_sample.wav'></audio><br>
+af_river_sample.wav: <audio controls src='samples/af_river_sample.wav'></audio><br>
+af_sarah_sample.wav: <audio controls src='samples/af_sarah_sample.wav'></audio><br>
+af_sky_sample.wav: <audio controls src='samples/af_sky_sample.wav'></audio><br>
+am_adam_sample.wav: <audio controls src='samples/am_adam_sample.wav'></audio><br>
+am_echo_sample.wav: <audio controls src='samples/am_echo_sample.wav'></audio><br>
+am_eric_sample.wav: <audio controls src='samples/am_eric_sample.wav'></audio><br>
+am_fenrir_sample.wav: <audio controls src='samples/am_fenrir_sample.wav'></audio><br>
+am_liam_sample.wav: <audio controls src='samples/am_liam_sample.wav'></audio><br>
+am_michael_sample.wav: <audio controls src='samples/am_michael_sample.wav'></audio><br>
+am_onyx_sample.wav: <audio controls src='samples/am_onyx_sample.wav'></audio><br>
+am_puck_sample.wav: <audio controls src='samples/am_puck_sample.wav'></audio><br>
+am_santa_sample.wav: <audio controls src='samples/am_santa_sample.wav'></audio><br>
+bf_alice_sample.wav: <audio controls src='samples/bf_alice_sample.wav'></audio><br>
+bf_emma_sample.wav: <audio controls src='samples/bf_emma_sample.wav'></audio><br>
+bf_isabella_sample.wav: <audio controls src='samples/bf_isabella_sample.wav'></audio><br>
+bf_lily_sample.wav: <audio controls src='samples/bf_lily_sample.wav'></audio><br>
+bm_daniel_sample.wav: <audio controls src='samples/bm_daniel_sample.wav'></audio><br>
+bm_fable_sample.wav: <audio controls src='samples/bm_fable_sample.wav'></audio><br>
+bm_george_sample.wav: <audio controls src='samples/bm_george_sample.wav'></audio><br>
+bm_lewis_sample.wav: <audio controls src='samples/bm_lewis_sample.wav'></audio><br>
+
+</details>
+
 ## 🗒️ Release notes
 <details>
 <summary>Release notes </summary>
