@@ -34,6 +34,7 @@
 * `--cover image.[jpg|png]` - Image to use for cover
 * `--paragraphpause <N>` - Number of milliseconds to pause between paragraphs
 * `--speed <N>` - Reading speed (ex 1.3)
+* `--notitles` - Do not read chapter titles when creating audiobook
 
 ## Deactivate virtual environment
 `deactivate`
@@ -56,6 +57,7 @@ If you've found something new, please open an issue and be sure to include:
 <details>
 <summary>Release notes </summary>
 
+* 20250221: Added `--notitles` option
 * 20250216: Initial release
 
 </details>
