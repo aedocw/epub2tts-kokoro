@@ -161,6 +161,7 @@ def export(book, sourcefile):
                     clean = re.sub(r'[\s\n]+', ' ', paragraph)
                     clean = re.sub(r'[“”]', '"', clean)  # Curly double quotes to standard double quotes
                     clean = re.sub(r'[‘’]', "'", clean)  # Curly single quotes to standard single quotes
+                    clean = re.sub(r'--', ', ', clean)
                     file.write(f"{clean}\n\n")
 
 def get_book(sourcefile):
@@ -252,7 +253,7 @@ def kokoro_read(paragraph, speaker, filename, pipeline, speed):
     final_audio = np.concatenate(audio_segments)
     soundfile.write(filename, final_audio, 24000)
 
-def read_book(book_contents, speaker, paragraphpause, speed):
+def read_book(book_contents, speaker, paragraphpause, speed, notitles):
     pipeline = KPipeline(lang_code=speaker[0])
     segments = []
     for i, chapter in enumerate(book_contents, start=1):
@@ -268,7 +269,7 @@ def read_book(book_contents, speaker, paragraphpause, speed):
             print(f"Section name: \"{chapter['title']}\"")
             if chapter["title"] == "":
                 chapter["title"] = "blank"
-            if chapter["title"] != "Title":
+            if chapter["title"] != "Title" and notitles != True:
                 kokoro_read(chapter["title"], speaker, "sntnc0.wav", pipeline, speed)
                 append_silence("sntnc0.wav", 1200)
             for pindex, paragraph in enumerate(
@@ -417,6 +418,11 @@ def main():
         default=1.3,
         help="reading speed (default: 1.3)"
     )
+    parser.add_argument(
+        "--notitles",
+        action="store_true",
+        help="Do not read chapter titles"
+    )
 
     args = parser.parse_args()
     print(args)
@@ -434,7 +440,7 @@ def main():
         torch.set_default_device('cuda')
 
     book_contents, book_title, book_author, chapter_titles = get_book(args.sourcefile)
-    files = read_book(book_contents, args.speaker, args.paragraphpause, args.speed)
+    files = read_book(book_contents, args.speaker, args.paragraphpause, args.speed, args.notitles)
     generate_metadata(files, book_author, book_title, chapter_titles)
     m4bfilename = make_m4b(files, args.sourcefile, args.speaker)
     add_cover(args.cover, m4bfilename)
