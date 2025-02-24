@@ -239,16 +239,13 @@ def append_silence(tempfile, duration=1200):
 
 def kokoro_read(paragraph, speaker, filename, pipeline, speed):
     audio_segments = []
-# leaving this in for now, might split by sentence later, but seems that kokoro
-# can handle getting a paragraph at a time, and does well with pauses between
-# each sentence on its own.
-#    sentences = sent_tokenize(paragraph)
-#    for sent in sentences:
-#        print(sent)
-#        for gs, ps, audio in pipeline(sent, voice=speaker, speed=1.3, split_pattern=r'\n\n\n'):
-#            audio_segments.append(audio)
-    for gs, ps, audio in pipeline(paragraph, voice=speaker, speed=speed, split_pattern=r'\n\n\n'):
-        audio_segments.append(audio)
+    sentences = sent_tokenize(paragraph)
+    for sent in sentences:
+        for gs, ps, audio in pipeline(sent, voice=speaker, speed=1.3, split_pattern=r'\n\n\n'):
+            audio_segments.append(audio)
+# Read whole paragraph instead of just sentences
+#    for gs, ps, audio in pipeline(paragraph, voice=speaker, speed=speed, split_pattern=r'\n\n\n'):
+#        audio_segments.append(audio)
 
     final_audio = np.concatenate(audio_segments)
     soundfile.write(filename, final_audio, 24000)
