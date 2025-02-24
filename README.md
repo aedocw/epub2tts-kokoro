@@ -57,6 +57,7 @@ If you've found something new, please open an issue and be sure to include:
 <details>
 <summary>Release notes </summary>
 
+* 20250224: Changed to read individual setences rather than entire paragraph, for reading speed consistency
 * 20250221: Added `--notitles` option
 * 20250216: Initial release
 
