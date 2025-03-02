@@ -237,9 +237,45 @@ def append_silence(tempfile, duration=1200):
     # Save the combined audio back to file
     combined.export(tempfile, format="flac")
 
+def break_long_sentence(sentence, max_length=200):
+    # Split sentence based on commas
+    comma_segments = sentence.split(',')
+    segments = []
+    current_segment = ""
+    for segment in comma_segments:
+        # Check if adding the next segment exceeds max_length
+        temp_segment = current_segment + ("," if current_segment else "") + segment
+        if len(temp_segment) > max_length:
+            # Add the current segment to the list and reset it
+            if current_segment:
+                segments.append(current_segment)
+            # Start a new segment with the current part
+            current_segment = segment.strip()
+        else:
+            # Continue building the current segment
+            current_segment = temp_segment.strip()
+    # Don't forget to add the last segment if it exists
+    if current_segment:
+        segments.append(current_segment)
+    return segments
+
+def process_large_text(line):
+    # Tokenize the text into sentences
+    sentences = sent_tokenize(line)
+    # Initialize a list to store processed sentences
+    results = []
+    for sentence in sentences:
+        if len(sentence) > 500:
+            # Break the long sentences into smaller parts using commas
+            results.extend(break_long_sentence(sentence, max_length=350))
+        else:
+            results.append(sentence)
+    return results
+
 def kokoro_read(paragraph, speaker, filename, pipeline, speed):
     audio_segments = []
-    sentences = sent_tokenize(paragraph)
+    sentences = process_large_text(paragraph)
+    #sentences = sent_tokenize(paragraph)
     for sent in sentences:
         for gs, ps, audio in pipeline(sent, voice=speaker, speed=1.3, split_pattern=r'\n\n\n'):
             audio_segments.append(audio)
