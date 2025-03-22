@@ -58,12 +58,50 @@ def chap2text_epub(chap):
     paragraphs = []
     soup = BeautifulSoup(chap, "html.parser")
 
-    # Extract chapter title (assuming it's in an <h1> tag)
-    chapter_title = soup.find("h1")
+    # Try to find chapter title in various ways
+    chapter_title = None
+    
+    # 1. Look for headings in order of importance
+    for heading_level in ['h1', 'h2', 'h3']:
+        heading = soup.find(heading_level)
+        if heading:
+            chapter_title = heading.text.strip()
+            if chapter_title and len(chapter_title) > 0:
+                break
+    
+    # 2. If no heading found, look for common chapter title patterns
+    if not chapter_title:
+        # Look for text that matches common chapter title patterns
+        text_content = soup.get_text()
+        chapter_patterns = [
+            r'Chapter\s+\d+[.:]\s*(.+?)(?:\n|$)',
+            r'CHAPTER\s+\d+[.:]\s*(.+?)(?:\n|$)',
+            r'Chapter\s+(.+?)(?:\n|$)',
+            r'CHAPTER\s+(.+?)(?:\n|$)',
+            r'^\s*(\d+\.\s*.+?)(?:\n|$)',
+            r'^\s*([A-Z][A-Za-z\s]+)(?:\n|$)',
+        ]
+        
+        for pattern in chapter_patterns:
+            match = re.search(pattern, text_content, re.MULTILINE)
+            if match:
+                chapter_title = match.group(1).strip()
+                if chapter_title and len(chapter_title) > 0:
+                    break
+    
+    # 3. If still no title found, try to find the first significant text block
+    if not chapter_title:
+        first_text = soup.find(text=True, recursive=True)
+        if first_text:
+            chapter_title = first_text.strip()
+            if len(chapter_title) > 100:  # If it's too long, it's probably not a title
+                chapter_title = None
+
+    # Convert chapter title to title case if it exists
     if chapter_title:
-        chapter_title_text = chapter_title.text.strip()
-    else:
-        chapter_title_text = None
+        # Split into words and capitalize each word
+        words = chapter_title.split()
+        chapter_title = ' '.join(word.capitalize() for word in words)
 
     # Always skip reading links that are just a number (footnotes)
     for a in soup.findAll("a", href=True):
@@ -72,14 +110,16 @@ def chap2text_epub(chap):
 
     chapter_paragraphs = soup.find_all("p")
     if len(chapter_paragraphs) == 0:
-        print(f"Could not find any paragraph tags <p> in \"{chapter_title_text}\". Trying with <div>.")
+        print(f"Could not find any paragraph tags <p> in \"{chapter_title}\". Trying with <div>.")
         chapter_paragraphs = soup.find_all("div")
 
     for p in chapter_paragraphs:
         paragraph_text = "".join(p.strings).strip()
+        # Replace "■" with "-"
+        paragraph_text = paragraph_text.replace("■", "-")
         paragraphs.append(paragraph_text)
 
-    return chapter_title_text, paragraphs
+    return chapter_title, paragraphs
 
 def get_epub_cover(epub_path):
     try:
