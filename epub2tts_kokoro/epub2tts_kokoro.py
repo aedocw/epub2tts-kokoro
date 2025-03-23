@@ -58,28 +58,119 @@ def chap2text_epub(chap):
     paragraphs = []
     soup = BeautifulSoup(chap, "html.parser")
 
-    # Extract chapter title (assuming it's in an <h1> tag)
-    chapter_title = soup.find("h1")
+    # Remove XML declarations and DOCTYPE declarations from the soup
+    for element in soup.find_all(string=True):
+        if element.parent.name == 'html':
+            text = element.string
+            if text and ('<?xml' in text or '<!DOCTYPE' in text):
+                element.replace_with('')
+
+    # Try to find chapter title in various ways
+    def is_valid_title(title):
+        if not title or len(title) == 0:
+            return False
+            
+        # Check for XML-related content
+        if any(xml in title.lower() for xml in ['<?xml', 'doctype', 'encoding', 'version']):
+            return False
+            
+        # Check length and word count (much stricter limits)
+        if len(title) > 30:  # Reduced from 50
+            return False
+        if len(title.split()) > 3:  # Reduced from 5
+            return False
+            
+        # Check if it looks like a paragraph
+        if title.count('.') > 0 or title.count(',') > 0:  # No periods or commas allowed
+            return False
+            
+        # Check if it's just a long string of text without proper spacing
+        if len(title.split()) < 2:  # Must have at least 2 words
+            return False
+            
+        # Check for common paragraph indicators
+        if any(indicator in title.lower() for indicator in ['the ', 'and ', 'but ', 'or ', 'in ', 'on ', 'at ', 'to ', 'for ', 'of ']):
+            return False
+            
+        # Check for numbers (unless it's a chapter number)
+        if re.search(r'\d+', title) and not re.match(r'^Chapter\s+\d+', title):
+            return False
+            
+        # Check for common paragraph-like patterns
+        if any(pattern in title.lower() for pattern in ['begin with', 'explore', 'celebrate', 'help to', 'attend to', 'messages in']):
+            return False
+            
+        return True
+    
+    # 1. Look for headings in order of importance
+    chapter_title = None
+    for heading_level in ['h1', 'h2', 'h3']:
+        heading = soup.find(heading_level)
+        if heading:
+            title = heading.text.strip()
+            if is_valid_title(title):
+                chapter_title = title
+                break
+    
+    # 2. If no heading found, look for common chapter title patterns
+    if not chapter_title:
+        # Look for text that matches common chapter title patterns
+        text_content = soup.get_text()
+        # Remove any remaining XML declarations from the text content
+        text_content = re.sub(r'<\?xml.*?\?>', '', text_content, flags=re.DOTALL | re.IGNORECASE)
+        text_content = re.sub(r'<!DOCTYPE.*?>', '', text_content, flags=re.DOTALL | re.IGNORECASE)
+        
+        chapter_patterns = [
+            r'Chapter\s+\d+[.:]\s*(.+?)(?:\n|$)',
+            r'CHAPTER\s+\d+[.:]\s*(.+?)(?:\n|$)',
+            r'Chapter\s+(.+?)(?:\n|$)',
+            r'CHAPTER\s+(.+?)(?:\n|$)',
+            r'^\s*(\d+\.\s*.+?)(?:\n|$)',
+            r'^\s*([A-Z][A-Za-z\s]+)(?:\n|$)',
+        ]
+        
+        for pattern in chapter_patterns:
+            match = re.search(pattern, text_content, re.MULTILINE)
+            if match:
+                title = match.group(1).strip()
+                if is_valid_title(title):
+                    chapter_title = title
+                    break
+    
+    # 3. If still no valid title found, use a numbered chapter
+    if not chapter_title:
+        # Find the chapter number from the text content
+        chapter_match = re.search(r'Chapter\s+(\d+)', text_content, re.IGNORECASE)
+        if chapter_match:
+            chapter_num = chapter_match.group(1)
+            chapter_title = f"Chapter {chapter_num}"
+        else:
+            # If no chapter number found, use a generic "Part X" title
+            chapter_title = None
+
+    # Convert chapter title to title case if it exists
     if chapter_title:
-        chapter_title_text = chapter_title.text.strip()
-    else:
-        chapter_title_text = None
+        # Split into words and capitalize each word
+        words = chapter_title.split()
+        chapter_title = ' '.join(word.capitalize() for word in words)
 
     # Always skip reading links that are just a number (footnotes)
-    for a in soup.findAll("a", href=True):
+    for a in soup.find_all("a", href=True):
         if not any(char.isalpha() for char in a.text):
             a.extract()
 
     chapter_paragraphs = soup.find_all("p")
     if len(chapter_paragraphs) == 0:
-        print(f"Could not find any paragraph tags <p> in \"{chapter_title_text}\". Trying with <div>.")
+        print(f"Could not find any paragraph tags <p> in \"{chapter_title}\". Trying with <div>.")
         chapter_paragraphs = soup.find_all("div")
 
     for p in chapter_paragraphs:
         paragraph_text = "".join(p.strings).strip()
+        # Replace "■" with "-"
+        paragraph_text = paragraph_text.replace("■", "-")
         paragraphs.append(paragraph_text)
 
-    return chapter_title_text, paragraphs
+    return chapter_title, paragraphs
 
 def get_epub_cover(epub_path):
     try:
