@@ -264,12 +264,26 @@ def process_large_text(line):
     sentences = sent_tokenize(line)
     # Initialize a list to store processed sentences
     results = []
-    for sentence in sentences:
+    
+    i = 0
+    while i < len(sentences):
+        sentence = sentences[i]
+        word_count = len(sentence.split())
+        
+        # Combine with the next sentence if this one has fewer than 5 words
+        if word_count < 5 and i + 1 < len(sentences):
+            # Combine the current and next sentence
+            sentence = sentence + ' ' + sentences[i + 1]
+            i += 1  # Skip the next sentence since it's already combined
+
         if len(sentence) > 500:
             # Break the long sentences into smaller parts using commas
             results.extend(break_long_sentence(sentence, max_length=350))
         else:
             results.append(sentence)
+        
+        i += 1  # Move to the next sentence
+    
     return results
 
 def kokoro_read(paragraph, speaker, filename, pipeline, speed):
@@ -303,8 +317,7 @@ def read_book(book_contents, speaker, paragraphpause, speed, notitles):
             if chapter["title"] == "":
                 chapter["title"] = "blank"
             if chapter["title"] != "Title" and notitles != True:
-                kokoro_read(chapter["title"], speaker, "sntnc0.wav", pipeline, speed)
-                append_silence("sntnc0.wav", 1200)
+                chapter['paragraphs'][0] = chapter['title'] + ". " + chapter['paragraphs'][0]
             for pindex, paragraph in enumerate(
                 tqdm(chapter["paragraphs"], desc=f"Generating audio files: ",unit='pg')
             ):
