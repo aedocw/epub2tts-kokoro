@@ -291,6 +291,8 @@ def kokoro_read(paragraph, speaker, filename, pipeline, speed):
     sentences = process_large_text(paragraph)
     #sentences = sent_tokenize(paragraph)
     for sent in sentences:
+        # make only first letter of sentence uppercase
+        sent = sent.lower().capitalize()
         for gs, ps, audio in pipeline(sent, voice=speaker, speed=1.3, split_pattern=r'\n\n\n'):
             audio_segments.append(audio)
 # Read whole paragraph instead of just sentences
