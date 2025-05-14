@@ -270,8 +270,8 @@ def process_large_text(line):
         sentence = sentences[i]
         word_count = len(sentence.split())
         
-        # Combine with the next sentence if this one has fewer than 5 words
-        if word_count < 5 and i + 1 < len(sentences):
+        # Combine with the next sentence if this one has fewer than 8 words
+        if word_count < 8 and i + 1 < len(sentences):
             # Combine the current and next sentence
             sentence = sentence + ' ' + sentences[i + 1]
             i += 1  # Skip the next sentence since it's already combined
