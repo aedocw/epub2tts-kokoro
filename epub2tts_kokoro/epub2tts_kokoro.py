@@ -303,7 +303,29 @@ def kokoro_read(paragraph, speaker, filename, pipeline, speed):
     soundfile.write(filename, final_audio, 24000)
 
 def read_book(book_contents, speaker, paragraphpause, speed, notitles):
-    pipeline = KPipeline(lang_code=speaker[0])
+    current_device_name = torch.get_default_device() if torch.get_default_device() else 'cpu'
+    current_device = torch.device(current_device_name)
+    print(f"Attempting to use device: {current_device}")
+
+    pipeline = KPipeline(lang_code=speaker[0]) # Assuming speaker[0] is language code like 'en'
+
+    # Explicitly move the model to the current default device (e.g., 'xpu')
+    if hasattr(pipeline, 'model') and pipeline.model is not None:
+        try:
+            pipeline.model.to(current_device)
+            print(f"Kokoro model explicitly moved to {current_device}")
+            # You can add further checks here to verify all model parameters are on the correct device
+            # for name, param in pipeline.model.named_parameters():
+            #     if param.device != current_device:
+            #         print(f"Warning: Model parameter {name} is on {param.device} instead of {current_device}")
+            # for name, buf in pipeline.model.named_buffers():
+            #     if buf.device != current_device:
+            #         print(f"Warning: Model buffer {name} is on {buf.device} instead of {current_device}")
+        except Exception as e:
+            print(f"Error moving Kokoro model to {current_device}: {e}")
+    else:
+        print("Warning: KPipeline does not have a 'model' attribute or model is None.")
+
     segments = []
     for i, chapter in enumerate(book_contents, start=1):
         files = []
@@ -395,11 +417,11 @@ def make_m4b(files, sourcefile, speaker):
         "-i",
         filelist,
         "-codec:a",
-        "flac",
+        "flac", # Outputting to FLAC in an MP4 container
         "-f",
         "mp4",
         "-strict",
-        "-2",
+        "-2", # This is for AAC, may not be needed/valid for FLAC in MP4
         outputm4a,
     ]
     subprocess.run(ffmpeg_command)
@@ -412,7 +434,7 @@ def make_m4b(files, sourcefile, speaker):
         "-map_metadata",
         "1",
         "-codec",
-        "aac",
+        "aac", # Transcoding to AAC for the final M4B
         outputm4b,
     ]
     subprocess.run(ffmpeg_command)
@@ -425,15 +447,16 @@ def make_m4b(files, sourcefile, speaker):
 
 def add_cover(cover_img, filename):
     try:
-        if os.path.isfile(cover_img):
+        if cover_img and os.path.isfile(cover_img): # Added check if cover_img is not None
             m4b = mp4.MP4(filename)
-            cover_image = open(cover_img, "rb").read()
+            with open(cover_img, "rb") as f: # Ensure file is closed
+                cover_image = f.read()
             m4b["covr"] = [mp4.MP4Cover(cover_image)]
             m4b.save()
-        else:
+        elif cover_img: # Only print if cover_img was provided but not found
             print(f"Cover image {cover_img} not found")
-    except:
-        print(f"Cover image {cover_img} not found")
+    except Exception as e: # Catch more specific exceptions if possible
+        print(f"Error adding cover image {cover_img}: {e}")
 
 def main():
     parser = argparse.ArgumentParser(
@@ -452,7 +475,7 @@ def main():
     parser.add_argument(
         "--cover",
         type=str,
-        help="jpg image to use for cover",
+        help="jpg or png image to use for cover", # Clarified image types
     )
     parser.add_argument(
         "--paragraphpause",
@@ -481,17 +504,41 @@ def main():
     if args.sourcefile.endswith(".epub"):
         book = epub.read_epub(args.sourcefile)
         export(book, args.sourcefile)
-        exit()
+        print("EPUB successfully converted to TXT. Please run the script again with the .txt file to generate audio.")
+        exit() # Ensure exit after conversion
 
-    if torch.cuda.is_available():
-        print('CUDA GPU available')
-        torch.set_default_device('cuda')
+    # Check for Intel GPU (XPU)
+    try:
+        if torch.xpu.is_available():
+            print('Intel XPU (GPU) available. Setting as default device.')
+            torch.set_default_device('xpu')
+        else:
+            print('Intel XPU (GPU) not available. Using CPU.')
+            torch.set_default_device('cpu') # Explicitly set to CPU if no GPU
+    except AttributeError:
+        # This can happen if IPEX is not installed or PyTorch version doesn't support torch.xPU
+        print('torch.xpu not available (Intel Extension for PyTorch likely not installed). Using CPU.')
+        torch.set_default_device('cpu') # Explicitly set to CPU
+    except Exception as e:
+        print(f"An error occurred during device detection: {e}. Using CPU.")
+        torch.set_default_device('cpu')
+
 
     book_contents, book_title, book_author, chapter_titles = get_book(args.sourcefile)
     files = read_book(book_contents, args.speaker, args.paragraphpause, args.speed, args.notitles)
     generate_metadata(files, book_author, book_title, chapter_titles)
     m4bfilename = make_m4b(files, args.sourcefile, args.speaker)
-    add_cover(args.cover, m4bfilename)
+    
+    if args.cover: # Check if a cover was actually provided
+        add_cover(args.cover, m4bfilename)
+    else:
+        # Attempt to use the auto-generated cover if it exists
+        potential_cover_path = args.sourcefile.replace(".txt", ".png") # Assuming .txt input for this stage
+        if os.path.isfile(potential_cover_path):
+            print(f"Using automatically found cover: {potential_cover_path}")
+            add_cover(potential_cover_path, m4bfilename)
+        else:
+            print("No cover image provided or automatically found.")
 
 
 if __name__ == "__main__":
