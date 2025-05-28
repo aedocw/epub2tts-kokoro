@@ -507,21 +507,22 @@ def main():
         print("EPUB successfully converted to TXT. Please run the script again with the .txt file to generate audio.")
         exit() # Ensure exit after conversion
 
-    # Check for Intel GPU (XPU)
-    try:
-        if torch.xpu.is_available():
-            print('Intel XPU (GPU) available. Setting as default device.')
-            torch.set_default_device('xpu')
-        else:
-            print('Intel XPU (GPU) not available. Using CPU.')
-            torch.set_default_device('cpu') # Explicitly set to CPU if no GPU
-    except AttributeError:
-        # This can happen if IPEX is not installed or PyTorch version doesn't support torch.xPU
-        print('torch.xpu not available (Intel Extension for PyTorch likely not installed). Using CPU.')
-        torch.set_default_device('cpu') # Explicitly set to CPU
-    except Exception as e:
-        print(f"An error occurred during device detection: {e}. Using CPU.")
-        torch.set_default_device('cpu')
+    # Check for GPU
+    if torch.cuda.is_available():
+        print('Nvidia GPU available. Setting as default device.')
+        torch.set_default_device('cuda')
+    elif torch.xpu.is_available():
+        print('Intel XPU (GPU) available. Setting as default device.')
+        torch.set_default_device('xpu')
+    elif torch.backends.mps.is_available():
+        print('Apple MPS GPU available. Setting as default device.')
+        torch.set_default_device('mps')
+    elif torch.backends.rocm.is_available():
+        print('AMD ROCm GPU available. Setting as default device.')
+        torch.set_default_device('rocm')
+    else:
+        print('No GPU available. Using CPU.')
+        torch.set_default_device('cpu') # Explicitly set to CPU if no GPU
 
 
     book_contents, book_title, book_author, chapter_titles = get_book(args.sourcefile)
