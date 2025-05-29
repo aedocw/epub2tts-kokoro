@@ -410,11 +410,11 @@ def make_m4b(files, sourcefile, speaker):
         "-i",
         filelist,
         "-codec:a",
-        "flac", 
+        "flac",
         "-f",
         "mp4",
         "-strict",
-        "-2", 
+        "-2",
         outputm4a,
     ]
     subprocess.run(ffmpeg_command)
@@ -442,13 +442,13 @@ def add_cover(cover_img, filename):
     try:
         if os.path.isfile(cover_img):
             m4b = mp4.MP4(filename)
-            cover_image = open(cover_img, "rb").read()                cover_image = f.read()
+            cover_image = open(cover_img, "rb").read()
             m4b["covr"] = [mp4.MP4Cover(cover_image)]
             m4b.save()
         else:
             print(f"Cover image {cover_img} not found")
-    except Exception as e:
-        print(f"Error adding cover image {cover_img}: {e}")
+    except:
+        print(f"Cover image {cover_img} not found")
 
 def main():
     parser = argparse.ArgumentParser(
