@@ -451,6 +451,23 @@ def add_cover(cover_img, filename):
         print(f"Cover image {cover_img} not found")
 
 def main():
+     # Check for GPU
+    if torch.cuda.is_available():
+        print('Nvidia GPU available. Setting as default device.')
+        torch.set_default_device('cuda')
+    elif torch.xpu.is_available():
+        print('Intel XPU (GPU) available. Setting as default device.')
+        torch.set_default_device('xpu')
+    elif torch.backends.mps.is_available():
+        print('Apple MPS GPU available. Setting as default device.')
+        torch.set_default_device('mps')
+    elif torch.backends.rocm.is_available():
+        print('AMD ROCm GPU available. Setting as default device.')
+        torch.set_default_device('rocm')
+    else:
+        print('No GPU available. Using CPU.')
+        torch.set_default_device('cpu')
+        
     parser = argparse.ArgumentParser(
         prog="epub2tts-kokoro",
         description="Read a text file to audiobook format",
@@ -498,22 +515,7 @@ def main():
         export(book, args.sourcefile)
         exit()
 
-    # Check for GPU
-    if torch.cuda.is_available():
-        print('Nvidia GPU available. Setting as default device.')
-        torch.set_default_device('cuda')
-    elif torch.xpu.is_available():
-        print('Intel XPU (GPU) available. Setting as default device.')
-        torch.set_default_device('xpu')
-    elif torch.backends.mps.is_available():
-        print('Apple MPS GPU available. Setting as default device.')
-        torch.set_default_device('mps')
-    elif torch.backends.rocm.is_available():
-        print('AMD ROCm GPU available. Setting as default device.')
-        torch.set_default_device('rocm')
-    else:
-        print('No GPU available. Using CPU.')
-        torch.set_default_device('cpu')
+   
 
 
     book_contents, book_title, book_author, chapter_titles = get_book(args.sourcefile)

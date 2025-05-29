@@ -1,7 +1,5 @@
-# Use the Intel base image which includes Python, PyTorch, IPEX, and XPU support
 FROM docker.io/intel/intel-extension-for-pytorch:2.7.10-xpu-pip-base
 
-# Prevent debconf from asking questions and set locale
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
