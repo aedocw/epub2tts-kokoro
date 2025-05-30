@@ -303,7 +303,22 @@ def kokoro_read(paragraph, speaker, filename, pipeline, speed):
     soundfile.write(filename, final_audio, 24000)
 
 def read_book(book_contents, speaker, paragraphpause, speed, notitles):
+    current_device_name = torch.get_default_device() if torch.get_default_device() else 'cpu'
+    current_device = torch.device(current_device_name)
+    print(f"Attempting to use device: {current_device}")
+
     pipeline = KPipeline(lang_code=speaker[0])
+
+    # Explicitly move the model to the current default device (e.g., 'xpu')
+    if hasattr(pipeline, 'model') and pipeline.model is not None:
+        try:
+            pipeline.model.to(current_device)
+            print(f"Kokoro model explicitly moved to {current_device}")
+        except Exception as e:
+            print(f"Error moving Kokoro model to {current_device}: {e}")
+    else:
+        print("Warning: KPipeline does not have a 'model' attribute or model is None.")
+
     segments = []
     for i, chapter in enumerate(book_contents, start=1):
         files = []
@@ -436,6 +451,23 @@ def add_cover(cover_img, filename):
         print(f"Cover image {cover_img} not found")
 
 def main():
+     # Check for GPU
+    if torch.cuda.is_available():
+        print('Nvidia GPU available. Setting as default device.')
+        torch.set_default_device('cuda')
+    elif torch.xpu.is_available():
+        print('Intel XPU (GPU) available. Setting as default device.')
+        torch.set_default_device('xpu')
+    elif torch.backends.mps.is_available():
+        print('Apple MPS GPU available. Setting as default device.')
+        torch.set_default_device('mps')
+    elif torch.backends.rocm.is_available():
+        print('AMD ROCm GPU available. Setting as default device.')
+        torch.set_default_device('rocm')
+    else:
+        print('No GPU available. Using CPU.')
+        torch.set_default_device('cpu')
+        
     parser = argparse.ArgumentParser(
         prog="epub2tts-kokoro",
         description="Read a text file to audiobook format",
@@ -483,16 +515,14 @@ def main():
         export(book, args.sourcefile)
         exit()
 
-    if torch.cuda.is_available():
-        print('CUDA GPU available')
-        torch.set_default_device('cuda')
+   
+
 
     book_contents, book_title, book_author, chapter_titles = get_book(args.sourcefile)
     files = read_book(book_contents, args.speaker, args.paragraphpause, args.speed, args.notitles)
     generate_metadata(files, book_author, book_title, chapter_titles)
     m4bfilename = make_m4b(files, args.sourcefile, args.speaker)
     add_cover(args.cover, m4bfilename)
-
-
+    
 if __name__ == "__main__":
     main()

@@ -1,0 +1,48 @@
+FROM docker.io/intel/intel-extension-for-pytorch:2.7.10-xpu-pip-base
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+# - ffmpeg for audio processing
+# - git in case any pip package needs to fetch from a repo (good practice)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    git \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set a working directory for installations and temporary files
+WORKDIR /opt/app
+
+# Upgrade pip (inside the Python environment provided by the base image)
+# Using BuildKit cache mount for pip is still recommended for speeding up re-builds if requirements change
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install --no-cache-dir --upgrade pip
+
+# Copy your application's requirements.txt
+COPY requirements.txt .
+
+# Install Python packages from requirements.txt using pip cache
+# Ensure torch, torchvision, torchaudio, and intel-extension-for-pytorch are NOT in your requirements.txt
+# as they are provided by the base image.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install --no-cache-dir -r requirements.txt
+
+# Download NLTK data to a specific accessible location
+RUN python -c "import nltk; nltk.download('punkt', quiet=True, download_dir='/opt/nltk_data'); nltk.download('punkt_tab', quiet=True, download_dir='/opt/nltk_data')"
+ENV NLTK_DATA=/opt/nltk_data
+
+# Create the application directory structure as per your alias
+RUN mkdir -p /app/epub2tts_kokoro
+
+# Copy your application script into the designated path
+# Ensure epub2tts_kokoro.py is in the Docker build context (same directory as Dockerfile)
+COPY epub2tts_kokoro/epub2tts_kokoro.py /app/epub2tts_kokoro/epub2tts_kokoro.py
+
+# Set the default working directory for when the container runs (as per your alias logic)
+WORKDIR /data
+
+# Default command to execute when the container starts
+ENTRYPOINT ["python3", "/app/epub2tts_kokoro/epub2tts_kokoro.py"]

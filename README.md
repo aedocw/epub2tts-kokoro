@@ -15,6 +15,20 @@
 
 *NOTE:* If you want to specify where NLTK tokenizer will be stored (about 50mb), use an environment variable: `export NLTK_DATA="your/path/to/nltk_data"`
 
+## 🐋 Docker
+
+```
+podmand build -f Dockerfile.intel -f localhost/epub2tts-kokoro-intel .
+```
+
+```
+alias epub2tts-k='podman run --rm -it --device /dev/dri \
+    -v "$PWD:$PWD":Z \
+    -v "$HOME/.cache/kokoro_hf_cache:/root/.cache/huggingface:Z" \
+    -w "$PWD" \
+    localhost/epub2tts-kokoro-intel'
+```
+
 ## OPTIONAL - activate the virutal environment if using
 1. `source .venv/bin/activate`
 
