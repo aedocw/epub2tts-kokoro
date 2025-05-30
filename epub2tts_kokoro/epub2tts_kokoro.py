@@ -1,12 +1,15 @@
-import argparse
 import os
+import sys
+# Automatically enable MPS fallback on Apple Silicon macOS
+if sys.platform == 'darwin':
+    os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
+import argparse
 import numpy as np
 import re
 import soundfile
 import subprocess
 import torch
 import warnings
-import sys
 from tqdm import tqdm
 from kokoro import KPipeline
 
