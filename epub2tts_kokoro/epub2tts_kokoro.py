@@ -287,6 +287,13 @@ def process_large_text(line):
         
         i += 1  # Move to the next sentence
     
+    # Before returning, combine last elements if they are too short
+    if results and len(results[-1].split()) < 8:
+        if len(results) > 1:
+            # Combine the last two sentences if they are both short
+            results[-2] += ' ' + results[-1]
+            results.pop()
+            
     return results
 
 def kokoro_read(paragraph, speaker, filename, pipeline, speed):
