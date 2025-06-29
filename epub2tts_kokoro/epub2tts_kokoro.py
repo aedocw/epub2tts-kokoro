@@ -301,18 +301,24 @@ def process_large_text(line):
             
     return results
 
+def conditional_sentence_case(sent):
+    # Split the sentence into words
+    words = sent.split()
+
+    # Check if the first two words are uppercase
+    if len(words) >= 2 and words[0].isupper() and words[1].isupper():
+        # Convert the entire sentence to lowercase, then capitalize the first letter
+        sent = sent.lower().capitalize()
+
+    return sent
+
 def kokoro_read(paragraph, speaker, filename, pipeline, speed):
     audio_segments = []
     sentences = process_large_text(paragraph)
-    #sentences = sent_tokenize(paragraph)
     for sent in sentences:
-        # make only first letter of sentence uppercase
-        sent = sent.lower().capitalize()
+        sent = conditional_sentence_case(sent.strip())
         for gs, ps, audio in pipeline(sent, voice=speaker, speed=1.3, split_pattern=r'\n\n\n'):
             audio_segments.append(audio)
-# Read whole paragraph instead of just sentences
-#    for gs, ps, audio in pipeline(paragraph, voice=speaker, speed=speed, split_pattern=r'\n\n\n'):
-#        audio_segments.append(audio)
 
     final_audio = np.concatenate(audio_segments)
     soundfile.write(filename, final_audio, 24000)
