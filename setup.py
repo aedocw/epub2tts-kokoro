@@ -10,7 +10,7 @@ setup(
     author_email="c@aedo.dev",
     url="https://github.com/aedocw/epub2tts-kokoro",
     license="GPL 3.0",
-    version="1.2.4",
+    version="1.3.0",
     packages=find_packages(),
     install_requires=requirements,
     entry_points={
