@@ -393,7 +393,16 @@ def read_book(book_contents, speaker, paragraphpause, speed, notitles):
             if chapter["title"] == "":
                 chapter["title"] = "blank"
             if chapter["title"] != "Title" and notitles != True:
-                chapter['paragraphs'][0] = chapter['title'] + ". " + chapter['paragraphs'][0]
+                title_temp = "title.flac"
+                if not os.path.isfile(title_temp):
+                    kokoro_read(chapter['title'] + ".", speaker, "title_temp.wav", pipeline, speed)
+                    append_silence("title_temp.wav", paragraphpause)
+                    # Convert to flac
+                    audio = AudioSegment.from_file("title_temp.wav")
+                    audio.export(title_temp, format="flac")
+                    os.remove("title_temp.wav")
+                files.append(title_temp)
+
             for pindex, paragraph in enumerate(
                 tqdm(chapter["paragraphs"], desc=f"Generating audio files: ",unit='pg')
             ):
