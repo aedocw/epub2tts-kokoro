@@ -7,6 +7,7 @@
 - [x] Embeds cover art if specified
 - [x] Resumes where it left off if interrupted
 - [x] NOTE: epub file must be DRM-free
+- [X] Optional mp3 export for services like BookFunnel.com
 
 
 ## 📖 Usage
@@ -49,6 +50,7 @@ alias epub2tts-k='podman run --rm -it --device /dev/dri \
 * `--paragraphpause <N>` - Number of milliseconds to pause between paragraphs
 * `--speed <N>` - Reading speed (ex 1.3)
 * `--notitles` - Do not read chapter titles when creating audiobook
+* `--keep-chapters` - Retain identified sections as numbered MP3 files
 
 ## Deactivate virtual environment
 `deactivate`
@@ -71,6 +73,7 @@ If you've found something new, please open an issue and be sure to include:
 <details>
 <summary>Release notes </summary>
 
+* 20251209: Added `--keep-chapters` feature. Notes on ROCM situation.
 * 20250224: Changed to read individual setences rather than entire paragraph, for reading speed consistency
 * 20250221: Added `--notitles` option
 * 20250216: Initial release
@@ -125,7 +128,33 @@ pip install .
 
 Running epub2tts in WSL2 with Ubuntu 22 is the easiest approach, but these steps should work for running directly in windows.
 
-(TBD)
+### Windows 11 via PowerShell
+
+No issues were encountered following the procedure for required components and utilizing choco when an option:
+
+To install precompiled binaries of eSpeak NG on Windows:
+
+1. open (https://github.com/espeak-ng/espeak-ng/releases) and click on Latest release and then appropriate *.msi file, e.g. espeak-ng-20191129-b702b03-x64.msi
+2. Execute downloaded installer package.
+
+</details>
+
+<details>
+<summary>GPU Support</summary>
+
+## ROCM pyTorch Status
+
+(TBD): Some issues cropped up on ROCM enabled systems where mismatch of ROCM backend (torch.cuda.is_available() returns true) but no ROCM device is present. To bypass that on effected systems, removed test for ROCM backend. 
+* A path forward exists and will be added in a future patch. It will involve compiling wheel files via: https://github.com/scottt/rocm-TheRock/blob/gfx1151/docs/development/windows_support.md
+
+Some creative pinning of torch, torchaudio and torchvision will be required. 
+
+### Hardware Notes:
+
+To have any chance of making a ROCm card work, you will need to identify the chipset. EG: 
+RX6800 --> gfx103X --> RDNA2 (Not RDNA3!) Doesn't have WMMA, and thus may never work for GPU acceleration with this process.
+
+*Issues* Some common but slightly older cards in the gfx10 arch may never work again, or never work outside very narrow bespoke combinations of cuda, pytorch, python and rocm. It's likely never going to happen.
 
 </details>
 

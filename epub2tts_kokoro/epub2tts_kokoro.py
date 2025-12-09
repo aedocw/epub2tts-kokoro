@@ -393,16 +393,7 @@ def read_book(book_contents, speaker, paragraphpause, speed, notitles):
             if chapter["title"] == "":
                 chapter["title"] = "blank"
             if chapter["title"] != "Title" and notitles != True:
-                title_temp = "title.flac"
-                if not os.path.isfile(title_temp):
-                    kokoro_read(chapter['title'] + ".", speaker, "title_temp.wav", pipeline, speed)
-                    append_silence("title_temp.wav", paragraphpause)
-                    # Convert to flac
-                    audio = AudioSegment.from_file("title_temp.wav")
-                    audio.export(title_temp, format="flac")
-                    os.remove("title_temp.wav")
-                files.append(title_temp)
-
+                chapter['paragraphs'][0] = chapter['title'] + ". " + chapter['paragraphs'][0]
             for pindex, paragraph in enumerate(
                 tqdm(chapter["paragraphs"], desc=f"Generating audio files: ",unit='pg')
             ):
@@ -460,7 +451,7 @@ def get_duration(file_path):
     duration_milliseconds = len(audio)
     return duration_milliseconds
 
-def make_m4b(files, sourcefile, speaker):
+def make_m4b(files, sourcefile, speaker, keep_chapters=False, book_title="", chapter_titles=None):
     filelist = "filelist.txt"
     basefile = sourcefile.replace(".txt", "")
     outputm4a = f"{basefile} ({speaker}).m4a"
@@ -502,8 +493,28 @@ def make_m4b(files, sourcefile, speaker):
     os.remove(filelist)
     os.remove("FFMETADATAFILE")
     os.remove(outputm4a)
+
+    if keep_chapters:
+        print("Converting chapter FLAC files to MP3...")
+        sanitized_title = re.sub(r'[<>:"/\\|?*]', '', book_title).replace(' ', '_')
+        for idx, file_path in enumerate(files, start=1):
+            chapter_title = chapter_titles[idx-1] if chapter_titles and idx-1 < len(chapter_titles) else f"Chapter{idx}"
+            sanitized_chapter = re.sub(r'[<>:"/\\|?*]', '', chapter_title).replace(' ', '_')
+            mp3_path = f"{sanitized_title}_-_{sanitized_chapter}_-_{idx:02d}.mp3"
+            ffmpeg_mp3_command = [
+                "ffmpeg",
+                "-i", file_path,
+                "-b:a", "256k",
+                "-ac", "2",
+                mp3_path
+            ]
+            subprocess.run(ffmpeg_mp3_command)
+
+    # Remove the FLAC files
     for f in files:
-        os.remove(f)
+        if os.path.exists(f):
+            os.remove(f)
+
     return outputm4b
 
 def add_cover(cover_img, filename):
@@ -519,7 +530,7 @@ def add_cover(cover_img, filename):
         print(f"Cover image {cover_img} not found")
 
 def main():
-     # Check for GPU
+    # Check for GPU
     if torch.cuda.is_available():
         print('Nvidia GPU available. Setting as default device.')
         torch.set_default_device('cuda')
@@ -529,12 +540,12 @@ def main():
     elif torch.backends.mps.is_available():
         print('Apple MPS GPU available. Setting as default device.')
         torch.set_default_device('mps')
-    elif torch.backends.rocm.is_available():
-        print('AMD ROCm GPU available. Setting as default device.')
-        torch.set_default_device('rocm')
+    #elif torch.backends.rocm.is_available():
+    #    print('AMD ROCm GPU available. Setting as default device.')
+    #    torch.set_default_device('rocm')
     else:
         print('No GPU available. Using CPU.')
-        torch.set_default_device('cpu')
+        torch.set_default_device('cpu')  # ROCM doesn't exist as a backend option really
         
     parser = argparse.ArgumentParser(
         prog="epub2tts-kokoro",
@@ -571,6 +582,11 @@ def main():
         action="store_true",
         help="Do not read chapter titles"
     )
+    parser.add_argument(
+        "--keep-chapters",
+        action="store_true",
+        help="Keep individual chapter FLAC files and convert them to MP3 format"
+    )
 
     args = parser.parse_args()
     print(args)
@@ -589,7 +605,7 @@ def main():
     book_contents, book_title, book_author, chapter_titles = get_book(args.sourcefile)
     files = read_book(book_contents, args.speaker, args.paragraphpause, args.speed, args.notitles)
     generate_metadata(files, book_author, book_title, chapter_titles)
-    m4bfilename = make_m4b(files, args.sourcefile, args.speaker)
+    m4bfilename = make_m4b(files, args.sourcefile, args.speaker, args.keep_chapters, book_title, chapter_titles)
     add_cover(args.cover, m4bfilename)
     
 if __name__ == "__main__":
