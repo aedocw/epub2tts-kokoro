@@ -26,3 +26,14 @@ pip-log.txt
 .tox
 
 .python-version
+venv/
+.venv/
+.vscode/
+
+
+# Temp audio files
+*.wav
+*.m4a
+*.m4b
+*.flac
+*.txt # Intermediate text stage
