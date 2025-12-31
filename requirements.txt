@@ -1,6 +1,6 @@
 beautifulsoup4
 ebooklib
-kokoro
+kokoro>=0.9.4
 lxml
 mutagen
 nltk
