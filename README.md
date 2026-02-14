@@ -15,19 +15,29 @@
 
 *NOTE:* If you want to specify where NLTK tokenizer will be stored (about 50mb), use an environment variable: `export NLTK_DATA="your/path/to/nltk_data"`
 
-## 🐋 Docker
+## 🐋 Docker (Recommended)
 
-```
-podmand build -f Dockerfile.intel -f localhost/epub2tts-kokoro-intel .
+The included `start.sh` script automatically detects your hardware (Nvidia, AMD, MacOS, or CPU) and builds/runs the appropriate container.
+
+```bash
+# Make the script executable (only needed once)
+chmod +x start.sh
+
+# Run epub2tts-kokoro
+./start.sh <arguments>
 ```
 
+**Examples:**
+
+```bash
+# Parse epub
+./start.sh mybook.epub
+
+# Read text to audiobook with specific speaker
+./start.sh mybook.txt --cover mybook.png --speaker af_heart
 ```
-alias epub2tts-k='podman run --rm -it --device /dev/dri \
-    -v "$PWD:$PWD":Z \
-    -v "$HOME/.cache/kokoro_hf_cache:/root/.cache/huggingface:Z" \
-    -w "$PWD" \
-    localhost/epub2tts-kokoro-intel'
-```
+
+The script manages volume mounts for the current directory and HuggingFace cache automatically. It supports both `docker` and `podman`.
 
 ## OPTIONAL - activate the virutal environment if using
 1. `source .venv/bin/activate`

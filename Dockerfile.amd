@@ -1,0 +1,53 @@
+# Base image for ROCm PyTorch
+# You can pin this to a specific version if needed, e.g., rocm/pytorch:rocm6.2_ubuntu22.04_py3.10_pytorch_2.3.0
+FROM rocm/pytorch:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONUNBUFFERED=1
+# Fix for MIOpen errors on some consumer cards or mismatched drivers
+ENV MIOPEN_DISABLE_CACHE=true
+ENV MIOPEN_DEBUG_COMGR_HIP_PCH_ENFORCE=0
+
+# Install system dependencies
+# - ffmpeg for audio processing
+# - git for fetching pip packages if needed
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    git \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set a working directory
+WORKDIR /opt/app
+
+# Upgrade pip
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install --no-cache-dir --upgrade pip
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python packages
+# Note: The base image already contains torch, torchvision, torchaudio compiled for ROCm.
+# We use --no-deps for kokoro to avoid pulling standard torch, then install other deps.
+# Actually, pip should respect installed versions. If it pulls torch, it means a version mismatch.
+# To be safe, we can try to install without upgrading torch.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install --no-cache-dir -r requirements.txt
+
+# Download NLTK data
+RUN python3 -c "import nltk; nltk.download('punkt', quiet=True, download_dir='/opt/nltk_data'); nltk.download('punkt_tab', quiet=True, download_dir='/opt/nltk_data')"
+ENV NLTK_DATA=/opt/nltk_data
+
+# Create application directory
+RUN mkdir -p /app/epub2tts_kokoro
+
+# Copy application script
+COPY epub2tts_kokoro/epub2tts_kokoro.py /app/epub2tts_kokoro/epub2tts_kokoro.py
+
+# Set default working directory for runtime
+WORKDIR /data
+
+# Default command
+ENTRYPOINT ["python3", "/app/epub2tts_kokoro/epub2tts_kokoro.py"]

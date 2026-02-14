@@ -1,0 +1,53 @@
+# Dockerfile for AMD Strix Halo (RDNA 3.5 / gfx1151) Support
+# Uses ROCm nightly builds which currently provide the best support for RDNA 3.5
+
+FROM rocm/pytorch:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONUNBUFFERED=1
+# Fix for MIOpen errors on some consumer cards or mismatched drivers
+ENV MIOPEN_DISABLE_CACHE=true
+ENV MIOPEN_DEBUG_COMGR_HIP_PCH_ENFORCE=0
+# Explicitly target gfx1151 (Strix Halo) just in case, though the nightly build should handle it
+ENV HSA_OVERRIDE_GFX_VERSION=11.5.1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    git \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set a working directory
+WORKDIR /opt/app
+
+# Upgrade pip
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install --no-cache-dir --upgrade pip
+
+# Copy requirements
+COPY requirements.txt .
+
+# PyTorch is already installed in the base image (nightly version)
+# We just need to install other requirements
+
+# Install other Python packages
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install --no-cache-dir -r requirements.txt
+
+# Download NLTK data
+RUN python3 -c "import nltk; nltk.download('punkt', quiet=True, download_dir='/opt/nltk_data'); nltk.download('punkt_tab', quiet=True, download_dir='/opt/nltk_data')"
+ENV NLTK_DATA=/opt/nltk_data
+
+# Create application directory
+RUN mkdir -p /app/epub2tts_kokoro
+
+# Copy application script
+COPY epub2tts_kokoro/epub2tts_kokoro.py /app/epub2tts_kokoro/epub2tts_kokoro.py
+
+# Set default working directory for runtime
+WORKDIR /data
+
+# Default command
+ENTRYPOINT ["python3", "/app/epub2tts_kokoro/epub2tts_kokoro.py"]
