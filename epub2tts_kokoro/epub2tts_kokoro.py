@@ -532,6 +532,9 @@ def main():
     elif torch.backends.rocm.is_available():
         print('AMD ROCm GPU available. Setting as default device.')
         torch.set_default_device('rocm')
+    elif torch.is_vulkan_available():
+        print('Vulkan GPU available. Setting as default device.')
+        torch.set_default_device('vulkan')
     else:
         print('No GPU available. Using CPU.')
         torch.set_default_device('cpu')

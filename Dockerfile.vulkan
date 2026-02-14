@@ -1,0 +1,60 @@
+# Dockerfile for Vulkan Support
+# Note: Standard PyTorch wheels usually do NOT include Vulkan backend support on Linux.
+# This Dockerfile sets up the environment (Vulkan SDK, drivers), but PyTorch might still default to CPU
+# unless built from source with USE_VULKAN=1.
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies and Vulkan SDK tools
+# mesa-vulkan-drivers is for AMD/Intel. nvidia-driver would be needed for Nvidia but we assume host driver mapping.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    ffmpeg \
+    git \
+    wget \
+    gnupg2 \
+    ca-certificates \
+    libvulkan1 \
+    mesa-vulkan-drivers \
+    vulkan-tools \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /opt/app
+
+# Upgrade pip
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install --no-cache-dir --upgrade pip
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install PyTorch CPU-only first to avoid pulling CUDA version
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Install Python packages
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install --no-cache-dir -r requirements.txt
+
+# Download NLTK data
+RUN python3 -c "import nltk; nltk.download('punkt', quiet=True, download_dir='/opt/nltk_data'); nltk.download('punkt_tab', quiet=True, download_dir='/opt/nltk_data')"
+ENV NLTK_DATA=/opt/nltk_data
+
+# Create application directory
+RUN mkdir -p /app/epub2tts_kokoro
+
+# Copy application script
+COPY epub2tts_kokoro/epub2tts_kokoro.py /app/epub2tts_kokoro/epub2tts_kokoro.py
+
+# Set default working directory for runtime
+WORKDIR /data
+
+# Default command
+ENTRYPOINT ["python3", "/app/epub2tts_kokoro/epub2tts_kokoro.py"]

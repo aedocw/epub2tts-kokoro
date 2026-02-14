@@ -26,3 +26,9 @@ pip-log.txt
 .tox
 
 .python-version
+
+
+#ebooks
+*.epub
+*.mobi
+*.txt
