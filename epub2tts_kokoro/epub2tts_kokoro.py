@@ -355,7 +355,7 @@ def kokoro_read(paragraph, speaker, filename, pipeline, speed):
     sentences = process_large_text(paragraph)
     for sent in sentences:
         sent = conditional_sentence_case(sent.strip())
-        for gs, ps, audio in pipeline(sent, voice=speaker, speed=1.3, split_pattern=r'\n\n\n'):
+        for gs, ps, audio in pipeline(sent, voice=speaker, speed=speed, split_pattern=r'\n\n\n'):
             audio_segments.append(audio)
 
     final_audio = np.concatenate(audio_segments)
